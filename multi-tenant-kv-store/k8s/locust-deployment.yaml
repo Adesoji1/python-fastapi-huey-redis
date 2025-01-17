@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust
+  labels:
+    app: locust
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: locust
+  template:
+    metadata:
+      labels:
+        app: locust
+    spec:
+      containers:
+      - name: locust
+        image: adesojialu/locust:latest
+        args:
+          - "-f"
+          - "/mnt/locust/locustfile.py"
+          - "--host=http://fastapi-service.default.svc.cluster.local:8000"
+          - "--users=2000"
+          - "--spawn-rate=50"
+          - "--run-time=20s"
+        ports:
+        - containerPort: 8089
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"

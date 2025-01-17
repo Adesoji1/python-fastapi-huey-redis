@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi
+  labels:
+    app: fastapi
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: fastapi
+    spec:
+      containers:
+      - name: fastapi-app
+        image: "adesojialu/multitenant:latest"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: API_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: API_HOST
+        - name: API_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: API_PORT
+        - name: API_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: API_DEBUG
+        - name: JWT_ALGORITHM
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: JWT_ALGORITHM
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: ACCESS_TOKEN_EXPIRE_MINUTES
+        - name: REDIS_HOST
+          value: "redis"  
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: REDIS_DB
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: multi-tenant-kv-store-secret
+              key: JWT_SECRET_KEY
+        - name: SUPABASE_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: multi-tenant-kv-store-secret
+              key: SUPABASE_DATABASE_URL
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: multi-tenant-kv-store-secret
+              key: POSTGRES_HOST
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: multi-tenant-kv-store-secret
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: multi-tenant-kv-store-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: multi-tenant-kv-store-secret
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: multi-tenant-kv-store-secret
+              key: POSTGRES_PORT
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10

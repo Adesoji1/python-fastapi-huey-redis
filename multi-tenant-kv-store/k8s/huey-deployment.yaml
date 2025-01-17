@@ -1,0 +1,48 @@
+#piVersion: apps/v1
+kind: Deployment
+metadata:
+  name: huey
+  labels:
+    app: huey
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: huey
+  template:
+    metadata:
+      labels:
+        app: huey
+    spec:
+      containers:
+      - name: huey
+        image: "adesojialu/hueyimage:latest"
+        imagePullPolicy: Always
+        command: ["python", "-m", "huey.bin.huey_consumer", "src.services.tasks.huey"]
+        env:
+        - name: REDIS_HOST
+          value: "redis" 
+        - name: REDIS_PORT
+          value: "6379"
+        - name: HUEY_REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: HUEY_REDIS_HOST
+        - name: HUEY_REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: HUEY_REDIS_PORT
+        - name: HUEY_REDIS_DB
+          valueFrom:
+            configMapKeyRef:
+              name: multi-tenant-kv-store-config
+              key: HUEY_REDIS_DB
+        resources:
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"

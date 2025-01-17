@@ -1,0 +1,80 @@
+version: '3.8'
+
+networks:
+  mt_network:
+    driver: bridge
+
+services:
+  web:
+    build: .
+    container_name: mt_kv_store
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - mt_network
+    volumes:
+      - ./:/app
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    image: postgres:15.8-alpine
+    container_name: mt_db
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - mt_network
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: mt_redis
+    networks:
+      - mt_network
+    ports:
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mt_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - mt_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mt_grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - mt_network
+
+  huey-worker:
+    build: .
+    container_name: huey_worker
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+    networks:
+      - mt_network
+    command: python -m huey.bin.huey_consumer src.services.tasks.huey
+
+volumes:
+  pgdata:
+  redisdata:
+

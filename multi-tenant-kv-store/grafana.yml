@@ -1,0 +1,35 @@
+server:
+  http_port: 3000  
+  root_url: http://localhost:3000
+  serve_from_sub_path: false
+
+auth:
+  disable_login_form: false
+  disable_signout_menu: true
+
+security:
+  admin_user: admin  
+  admin_password: admin 
+
+users:
+  default_theme: light  
+
+dashboards:
+  default_home_dashboard_path: /var/lib/grafana/dashboards/home.json
+  min_refresh_interval: 5s
+
+datasources:
+  path: /etc/grafana/provisioning/datasources
+
+dashboard_providers:
+  path: /etc/grafana/provisioning/dashboards
+
+log:
+  level: info
+  mode: console
+
+paths:
+  data: /var/lib/grafana/data
+  logs: /var/lib/grafana/logs
+  plugins: /var/lib/grafana/plugins
+  provisioning: /etc/grafana/provisioning
