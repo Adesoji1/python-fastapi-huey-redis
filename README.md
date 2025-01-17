@@ -68,10 +68,10 @@ Below is a **comprehensive overview** of how the existing codebase **fulfills th
 1. **Redis** as the Key-Value Store:
    - The code uses **Redis** for storing keys. Redis is known for extremely high throughput (easily thousands or tens of thousands of ops/sec).
 2. **Kubernetes Manifest Files**:
-   - The`deployment.yaml files` present  [here](k8s)  references scaling parameters (replicas, HPA, etc.).
+   - The`deployment.yaml files` present  [here](multi-tenant-kv-store/k8s)  references scaling parameters (replicas, HPA, etc.).
    - This also allows you to run multiple instances (pods) of the FastAPI service concurrently, distributing load.
 3. **Redis Clustering**:
-   - I onfigured the Redis instance with clustering  for horizontal scaling if needed as seen [here](k8s/redis-statefulset.yaml).
+   - I onfigured the Redis instance with clustering  for horizontal scaling if needed as seen [here](multi-tenant-kv-store/k8s/redis-statefulset.yaml).
 4. **Load Testing**:
    - The code shows load tests, you can run tools like **Locust** to verify 10k ops/20sec. we used locust using this command 
 
@@ -91,13 +91,13 @@ Below is a **comprehensive overview** of how the existing codebase **fulfills th
 - Integrate Huey and Redis for asynchronous or scheduled tasks (expiry management, audit logging, etc.).
 
 **Where It’s Fulfilled:**
-1. **`tasks.py`**  [here](src/services/tasks.py) with **Huey**:
+1. **`tasks.py`**  [here](multi-tenant-kv-store/src/services/tasks.py) with **Huey**:
    - This contains the `@huey.periodic_task(crontab(minute='*/5'))` → `audit_logging()`, which logs data or metrics every 5 minutes.
    -This  contains `@huey.task()` → `async_create_schema(schema_name)` or `process_expired_keys()` for custom logic (like TTL beyond Redis built-in).
 2. **Redis** used by Huey:
-   - Huey is configured to connect to Redis with `db=1` typically (distinct from the main application’s `db=0`) as seen [here](src/config.py).
+   - Huey is configured to connect to Redis with `db=1` typically (distinct from the main application’s `db=0`) as seen [here](multi-tenant-kv-store/src/config.py).
 3. **Schema Creation** Offloaded:
-   - The example shows how you dispatch `async_create_schema` so the main request is not blocked, improving user experience as seen [here](src/services/tasks.py). 
+   - The example shows how you dispatch `async_create_schema` so the main request is not blocked, improving user experience as seen [here](multi-tenant-kv-store/src/services/tasks.py). 
 
 **Outcome:**  
 - This means that i  have asynchronous tasks for heavy-lifting (e.g., schema creation) or scheduled tasks (audit logging, expiry checks).  
@@ -113,7 +113,7 @@ Below is a **comprehensive overview** of how the existing codebase **fulfills th
 
 **Where It’s Fulfilled:**
 1. **Kubernetes Health Checks**:
-   - In the `fastapi-deployment.yaml` file at line [102](k8s/fastapi-deployment.yaml),i have **liveness** and **readiness** probes set on `/health` endpoint. 
+   - In the `fastapi-deployment.yaml` file at line [102](multi-tenant-kv-store/k8s/fastapi-deployment.yaml),i have **liveness** and **readiness** probes set on `/health` endpoint. 
    - Example snippet:
      ```yaml
      livenessProbe:
@@ -132,7 +132,7 @@ Below is a **comprehensive overview** of how the existing codebase **fulfills th
    - This ensures pods are set automatically to check if they are healthy.
 
 2. **Redis Master/Replica** or **Cluster**:
-   - The code is *capable* of being a Master/Replica setup shown explicitly [here](k8s/redis-configmap.yaml) , but it’s a standard Redis approach. 
+   - The code is *capable* of being a Master/Replica setup shown explicitly [here](multi-tenant-kv-store/k8s/redis-configmap.yaml) , but it’s a standard Redis approach. 
    - In a production environment, we can set up Sentinel or a managed Redis solution for replication and failover but this `redis-configmap` set will suffice.
 
 3. **Stateful Storage**:
@@ -183,9 +183,9 @@ outlining how requests flow through your system, where Redis fits in, and
 how background tasks are handled..
 
 **Where It’s Fulfilled:**
-1. **`Here in architecture.png below`**  located [here](architecture.png)
+1. **`Here in architecture.png below`**  located [here](multi-tenant-kv-store/architecture.png)
 
-![Diagram](architecture.png)
+![Diagram](multi-tenant-kv-store/architecture.png)
 
 System Flow Description:
 
@@ -267,35 +267,35 @@ To run this application, navigate to  `/multi-tenant-kv-store` and run these dif
 run `start_pods.sh` to start deployment. To terminate, run `shutdown_pods.sh`
 
 Grafana Running
-![first](a.png)
+![first](multi-tenant-kv-store/a.png)
 
 Fasatapi Swagger
-![second](b.png)
+![second](multi-tenant-kv-store/b.png)
 
 Uvicorn Logs
-![third](c.png)
+![third](multi-tenant-kv-store/c.png)
 
 Huey Running
-![fourth](d.png)
+![fourth](multi-tenant-kv-store/d.png)
 
 Locust Running
-![fifth](e.png)
+![fifth](multi-tenant-kv-store/e.png)
 
 Load Test
-![sixth](f.png)
+![sixth](multi-tenant-kv-store/f.png)
 
 Prometheus  Running
 
-![seventh](g.png)
+![seventh](multi-tenant-kv-store/g.png)
 
 Grafana Docker logs
 
-![seventh](h.png)
+![seventh](multi-tenant-kv-store/h.png)
 
 
 Load test Result
 
-![seventh](i.png)
+![seventh](multi-tenant-kv-store/i.png)
 
 
 ---
