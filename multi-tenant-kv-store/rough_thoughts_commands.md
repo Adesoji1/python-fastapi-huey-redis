@@ -27,7 +27,7 @@ https://docs.docker.com/engine/reference/commandline/login/#credential-stores
 
 docker push  adesojialu/multitenant:latest
 ```
-psql "postgresql://postgres:%23%40%40dfyttyy55464As@db.qxyxszjvfffbvrmsdcxt.supabase.co:5432/postgres
+
 
 docker build --no-cache -t adesojialu/hueyimage:latest -f Dockerfile.huey .
 docker push adesojialu/hueyimage:latest
@@ -472,11 +472,11 @@ In Grafana, you can build dashboards that visualize these metrics (requests per 
 
 
 echo -n 'CHANGE_ME_SUPER_SECRET' | base64
-echo -n "postgresql://postgres:#@@dfyttyy55464As@db.qxyxszjvfffbvrmsdcxt.supabase.co:5432/postgres" | base64
+echo -n "" | base64
 
-echo -n "db.qxyxszjvfffbvrmsdcxt.supabase.co" | base64
+echo -n "dxxxxxxxx" | base64
 
-echo -n "#@@dfyttyy55464As" | base64
+echo -n "xxxxx" | base64
 
 echon -n "postgres" | base64
 
@@ -517,81 +517,6 @@ docker build  --no-cache  -t adesojialu/multitenant:latest -f Dockerfile .
 docker push  adesojialu/multitenant:latest
 
 
-
-
-
-
-## Short Architecture Document
-
-### **Design Justifications**
-
-#### **Redis Topology**
-- **Replication Strategy**: A Redis cluster was chosen for horizontal scalability and fault tolerance. Each node in the cluster manages a subset of keys, ensuring even data distribution and reducing bottlenecks.
-  - **Reason**: Redis clustering supports sharding, making the system capable of handling high throughput (e.g., 10k reads/writes per second).
-  - **Replication**: Each shard has replicas for failover, ensuring high availability.
-
-#### **FastAPI Application**
-- **Horizontal Scaling**: The FastAPI application is deployed with multiple replicas managed by Kubernetes.
-  - **Reason**: Multiple replicas ensure the system can handle increased user load and failover scenarios.
-- **JWT-Based Authentication**: Ensures secure and isolated access for tenants. Each tenant’s data is namespaced to prevent collisions.
-
-#### **Huey Integration**
-- **Background Tasks**: Huey handles periodic tasks like removing expired keys and logging operations asynchronously.
-  - **Reason**: Offloading these tasks ensures that user-facing endpoints remain responsive.
-
-#### **Monitoring**
-- **Prometheus and Grafana**:
-  - Prometheus scrapes metrics exposed by the FastAPI app and Huey.
-  - Grafana visualizes these metrics, providing insights into request rates, task queue sizes, and system latency.
-
-### **Architecture Diagram**
-```mermaid
-graph TD
-    subgraph Kubernetes Cluster
-        A[FastAPI Application] -- CRUD Operations --> C[Redis Cluster]
-        A -- Metrics --> D[Prometheus]
-        B[Huey Workers] --> C
-        C -- Replication --> C
-    end
-    D -- Visualization --> E[Grafana]
-    F[Clients] --> A
-```
-
-### **Multi-Region Setup**
-- **Objective**: Ensure low latency and high availability for global users.
-- **Strategy**:
-  - **Data Replication**: Use Redis’s cross-region replication feature to synchronize clusters across regions.
-  - **Traffic Routing**: Use a global load balancer to route users to the nearest regional cluster.
-  - **Consistency**:
-    - Implement a write-forwarding mechanism to ensure consistency for write operations.
-    - Use eventual consistency for read-heavy workloads to optimize performance.
-
-### **Advanced Scaling Scenarios**
-#### **Auto-scaling**
-- Enable Kubernetes Horizontal Pod Autoscaler (HPA) for FastAPI and Huey pods based on CPU/memory usage and custom metrics (e.g., request rate).
-
-#### **Sharding Improvements**
-- Dynamically adjust Redis shards based on data growth patterns using a monitoring service.
-
-### **Potential Improvements**
-
-#### **Caching Layers**
-- **Integration**: Add a local caching layer (e.g., Memcached) for frequently accessed keys.
-- **Benefit**: Reduces load on Redis, improving response times.
-
-#### **Advanced Load Testing**
-- Use tools like Locust or k6 to simulate large-scale user traffic.
-- Identify bottlenecks and optimize critical paths.
-
-#### **Zero-Downtime Deployments**
-- **Blue-Green Deployment**: Deploy new versions of services alongside the existing ones and gradually switch traffic.
-- **Canary Releases**: Test changes with a small percentage of users before full rollout.
-
-#### **Disaster Recovery**
-- Implement backup and restore mechanisms for the Redis cluster and PostgreSQL database.
-- Store backups in a secure and geographically redundant storage solution (e.g., AWS S3).
-
----
 
 docker run -p 9090:9090 \
   -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
